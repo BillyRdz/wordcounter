@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MOTD Copy Helper</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">MOTD Copy Helper</p>
+        <h1>Paste copy once. Copy clean outputs fast.</h1>
+        <p class="subhead">
+          Paste sections with keys, get cleaned copy, per-line copy buttons,
+          dynamic LOC naming, and word counts across every card.
+        </p>
+      </div>
+      <button class="btn primary" id="add-card">+ Add MOTD card</button>
+    </header>
+
+    <main>
+      <section class="summary">
+        <div class="summary-card">
+          <h2>All MOTDs</h2>
+          <p class="muted">Totals update as you type.</p>
+          <div class="summary-grid">
+            <div>
+              <label>Total word count</label>
+              <div class="metric" id="total-word-count">0</div>
+            </div>
+            <div>
+              <label>Number of cards</label>
+              <div class="metric" id="total-card-count">1</div>
+            </div>
+            <div>
+              <label>Combined cleaned copy</label>
+              <textarea id="combined-copy" readonly></textarea>
+              <button class="btn" data-copy-target="#combined-copy">Copy combined copy</button>
+            </div>
+            <div>
+              <label>LOC label</label>
+              <div class="inline-copy">
+                <input id="loc-output" type="text" readonly />
+                <button class="btn" data-copy-target="#loc-output">Copy LOC label</button>
+              </div>
+              <p class="helper" id="loc-helper">Format: LOC - MOTD - MMDDxN_totalWords</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="cards" class="cards"></section>
+    </main>
+
+    <template id="card-template">
+      <article class="card">
+        <header>
+          <div>
+            <h2>MOTD Card <span class="card-index"></span></h2>
+            <p class="muted">Paste your full block (keys + values). We extract the values.</p>
+          </div>
+          <button class="btn ghost remove-card" type="button">Remove</button>
+        </header>
+
+        <div class="card-grid">
+          <div>
+            <label>Paste raw section</label>
+            <textarea class="raw-input" placeholder="Full-screen title: Some copy\nCarousel-screen title: Some copy\nBody: Some copy\nButton: Some copy"></textarea>
+          </div>
+          <div>
+            <label>Cleaned copy (values only)</label>
+            <textarea class="clean-output" readonly></textarea>
+            <div class="row-actions">
+              <button class="btn" data-copy-target=".clean-output">Copy cleaned copy</button>
+              <span class="metric-inline"><span class="card-word-count">0</span> words</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="line-items">
+          <div class="line-items-header">
+            <h3>Copy individual lines</h3>
+            <button class="btn small" data-copy-target=".line-items" data-copy-lines>Copy all lines</button>
+          </div>
+          <div class="line-items-body"></div>
+        </div>
+      </article>
+    </template>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
