@@ -41,6 +41,8 @@ const LABELS = [
   { key: "button 3 copy", action: "keep", display: "Button 3 Copy" },
   { key: "button copy", action: "keep", display: "Button Copy" },
   { key: "copy", action: "drop", exact: true },
+  // bare "Content Library" heading line — skip it without changing state
+  { key: "content library", action: "ignore", exact: true },
   { key: "title", action: "keep", exact: true, display: "Title" },
   { key: "body", action: "keep", exact: true, display: "Body" },
   { key: "button", action: "keep", exact: true, display: "Button" },
@@ -121,8 +123,10 @@ const parseRaw = (rawText) => {
     // (empty Airtable fields run their labels together on one line)
     let matched = matchLabel(line);
     while (matched) {
-      currentAction = matched.label.action;
-      currentLabel = matched.label.display || "";
+      if (matched.label.action !== "ignore") {
+        currentAction = matched.label.action;
+        currentLabel = matched.label.display || "";
+      }
       line = matched.rest;
       matched = line ? matchLabel(line) : null;
     }
