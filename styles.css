@@ -292,3 +292,35 @@ input[readonly] {
   color: var(--muted, #6b7280);
   font-size: 0.9em;
 }
+
+.loc-types {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.loc-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  background: #f9fafb;
+}
+
+.loc-type:has(input:checked) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.loc-type input {
+  display: none;
+}

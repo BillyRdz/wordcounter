@@ -174,8 +174,20 @@ const updateSummary = () => {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
-  locOutputEl.value = `LOC - MOTD - ${month}${day}x${state.cards.length}_${totalWords}`;
+  const types = [
+    ["#type-motd", "MOTD"],
+    ["#type-pn", "PN"],
+    ["#type-int", "INT"],
+  ]
+    .filter(([sel]) => document.querySelector(sel)?.checked)
+    .map(([, tag]) => tag)
+    .join("-");
+  locOutputEl.value = `LOC - ${types} - ${month}${day}x${state.cards.length}_${totalWords}`;
 };
+
+document
+  .querySelectorAll("#type-motd, #type-pn, #type-int")
+  .forEach((box) => box.addEventListener("change", updateSummary));
 
 const renderLineItems = (card, container) => {
   container.innerHTML = "";

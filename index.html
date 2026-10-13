@@ -40,11 +40,16 @@
             </div>
             <div>
               <label>LOC label</label>
+              <div class="loc-types" role="group" aria-label="LOC label type">
+                <label class="loc-type"><input type="checkbox" id="type-motd" checked /> MOTD</label>
+                <label class="loc-type"><input type="checkbox" id="type-pn" /> PN</label>
+                <label class="loc-type"><input type="checkbox" id="type-int" /> INT</label>
+              </div>
               <div class="inline-copy">
                 <input id="loc-output" type="text" readonly />
                 <button class="btn" data-copy-target="#loc-output">Copy LOC label</button>
               </div>
-              <p class="helper" id="loc-helper">Format: LOC - MOTD - MMDDxN_totalWords</p>
+              <p class="helper" id="loc-helper">Format: LOC - MOTD-PN-INT - MMDDxN_totalWords</p>
             </div>
           </div>
         </div>
