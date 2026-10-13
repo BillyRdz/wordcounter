@@ -31,19 +31,19 @@ const LABELS = [
   { key: "content variant type", action: "drop" },
   { key: "push note", action: "drop" },
   { key: "deep link", action: "drop" },
-  { key: "carousel screen title", action: "keep" },
-  { key: "carousel title", action: "keep" },
-  { key: "full screen title", action: "keep" },
-  { key: "fullscreen title", action: "keep" },
-  { key: "full screen body", action: "keep" },
-  { key: "button 1 copy", action: "keep" },
-  { key: "button 2 copy", action: "keep" },
-  { key: "button 3 copy", action: "keep" },
-  { key: "button copy", action: "keep" },
+  { key: "carousel screen title", action: "keep", display: "Carousel Title" },
+  { key: "carousel title", action: "keep", display: "Carousel Title" },
+  { key: "full screen title", action: "keep", display: "Full Screen Title" },
+  { key: "fullscreen title", action: "keep", display: "Full Screen Title" },
+  { key: "full screen body", action: "keep", display: "Full Screen Body" },
+  { key: "button 1 copy", action: "keep", display: "Button 1 Copy" },
+  { key: "button 2 copy", action: "keep", display: "Button 2 Copy" },
+  { key: "button 3 copy", action: "keep", display: "Button 3 Copy" },
+  { key: "button copy", action: "keep", display: "Button Copy" },
   { key: "copy", action: "drop", exact: true },
-  { key: "title", action: "keep", exact: true },
-  { key: "body", action: "keep", exact: true },
-  { key: "button", action: "keep", exact: true },
+  { key: "title", action: "keep", exact: true, display: "Title" },
+  { key: "body", action: "keep", exact: true, display: "Body" },
+  { key: "button", action: "keep", exact: true, display: "Button" },
 ].sort((a, b) => b.key.length - a.key.length);
 
 // lowercase, strip punctuation/parens to spaces, collapse whitespace
@@ -100,6 +100,7 @@ const parseRaw = (rawText) => {
   let title = "";
   // untagged leading lines count as copy
   let currentAction = "keep";
+  let currentLabel = "";
 
   for (let line of rawText.split("\n")) {
     line = line.trim();
@@ -110,6 +111,7 @@ const parseRaw = (rawText) => {
     let matched = matchLabel(line);
     while (matched) {
       currentAction = matched.label.action;
+      currentLabel = matched.label.display || "";
       line = matched.rest;
       matched = line ? matchLabel(line) : null;
     }
@@ -118,7 +120,7 @@ const parseRaw = (rawText) => {
     if (currentAction === "title") {
       if (!title) title = line;
     } else if (currentAction === "keep") {
-      lines.push(line);
+      lines.push({ text: line, label: currentLabel });
     }
     // drop: ignore the value
   }
@@ -164,7 +166,7 @@ const copyToClipboard = async (text, button) => {
 const updateSummary = () => {
   const totalWords = state.cards.reduce((acc, card) => acc + card.wordCount, 0);
   const combinedCopy = state.cards
-    .map((card) => card.lines.join("\n"))
+    .map((card) => card.lines.map((line) => line.text).join("\n"))
     .filter(Boolean)
     .join("\n\n");
   totalWordCountEl.textContent = totalWords;
@@ -203,16 +205,25 @@ const renderLineItems = (card, container) => {
     const item = document.createElement("div");
     item.className = "line-item";
 
+    const content = document.createElement("span");
+    content.className = "line-content";
+    if (line.label) {
+      const tag = document.createElement("span");
+      tag.className = "line-label";
+      tag.textContent = line.label;
+      content.appendChild(tag);
+    }
     const text = document.createElement("span");
-    text.textContent = line;
+    text.textContent = line.text;
+    content.appendChild(text);
 
     const button = document.createElement("button");
     button.className = "btn small";
     button.type = "button";
     button.textContent = "Copy line";
-    button.addEventListener("click", () => copyToClipboard(line, button));
+    button.addEventListener("click", () => copyToClipboard(line.text, button));
 
-    item.appendChild(text);
+    item.appendChild(content);
     item.appendChild(button);
     container.appendChild(item);
   });
@@ -249,13 +260,14 @@ const buildCard = () => {
   const updateCard = () => {
     const { title, lines } = parseRaw(rawInput.value);
     cardData.lines = lines;
+    const lineTexts = lines.map((line) => line.text);
     // auto-fill the title from the paste unless the user typed their own
     if (!cardData.titleEdited) {
       cardData.title = title;
       titleInput.value = title;
     }
     syncTitleDisplay();
-    cleanOutput.value = lines.join("\n");
+    cleanOutput.value = lineTexts.join("\n");
     cardData.wordCount = wordCount(cleanOutput.value);
     wordCountEl.textContent = cardData.wordCount;
     renderLineItems(cardData, lineItemsBody);
@@ -280,7 +292,7 @@ const buildCard = () => {
   });
 
   copyLinesButton.addEventListener("click", () => {
-    copyToClipboard(cardData.lines.join("\n"), copyLinesButton);
+    copyToClipboard(cardData.lines.map((line) => line.text).join("\n"), copyLinesButton);
   });
 
   removeButton.addEventListener("click", () => {
