@@ -95,9 +95,14 @@ const matchLabel = (line) => {
   return null;
 };
 
+// A paste may open with a type annotation line: "MOTD - ...", "PN - ...",
+// "INT - ..." — it names the card type and is not copy.
+const TYPE_LINE_RE = /^(MOTD|PN|INT)(\s|-|$)/i;
+
 const parseRaw = (rawText) => {
   const lines = [];
   let title = "";
+  let cardType = "";
   // untagged leading lines count as copy
   let currentAction = "keep";
   let currentLabel = "";
@@ -105,6 +110,12 @@ const parseRaw = (rawText) => {
   for (let line of rawText.split("\n")) {
     line = line.trim();
     if (!line) continue;
+
+    const typeMatch = line.match(TYPE_LINE_RE);
+    if (typeMatch) {
+      if (!cardType) cardType = typeMatch[1].toUpperCase();
+      continue; // annotation line, never copy
+    }
 
     // consume one or more labels stacked at the start of the line
     // (empty Airtable fields run their labels together on one line)
@@ -125,7 +136,7 @@ const parseRaw = (rawText) => {
     // drop: ignore the value
   }
 
-  return { title, lines };
+  return { title, lines, cardType };
 };
 
 const wordCount = (text) => {
@@ -176,12 +187,26 @@ const updateSummary = () => {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
-  const types = [
+  const TYPE_BOXES = [
     ["#type-motd", "MOTD"],
     ["#type-pn", "PN"],
     ["#type-int", "INT"],
-  ]
-    .filter(([sel]) => document.querySelector(sel)?.checked)
+  ];
+  // auto-sync the chips to the card types found in the pastes; manual clicks
+  // stick until the set of pasted types changes
+  const present = new Set(
+    state.cards.filter((card) => card.hasContent).map((card) => card.type || "MOTD")
+  );
+  if (present.size === 0) present.add("MOTD");
+  const autoKey = [...present].sort().join("-");
+  if (autoKey !== updateSummary._autoKey) {
+    updateSummary._autoKey = autoKey;
+    TYPE_BOXES.forEach(([sel, tag]) => {
+      const box = document.querySelector(sel);
+      if (box) box.checked = present.has(tag);
+    });
+  }
+  const types = TYPE_BOXES.filter(([sel]) => document.querySelector(sel)?.checked)
     .map(([, tag]) => tag)
     .join("-");
   locOutputEl.value = `LOC - ${types} - ${month}${day}x${state.cards.length}_${totalWords}`;
@@ -234,6 +259,7 @@ const buildCard = () => {
   const cardEl = fragment.querySelector(".card");
   const indexEl = fragment.querySelector(".card-index");
   const rawInput = fragment.querySelector(".raw-input");
+  const typeDisplay = fragment.querySelector(".card-type");
   const titleInput = fragment.querySelector(".card-title");
   const titleDisplay = fragment.querySelector(".card-title-display");
   const copyTitleButton = fragment.querySelector("[data-copy-card-title]");
@@ -258,8 +284,11 @@ const buildCard = () => {
   };
 
   const updateCard = () => {
-    const { title, lines } = parseRaw(rawInput.value);
+    const { title, lines, cardType } = parseRaw(rawInput.value);
     cardData.lines = lines;
+    cardData.type = cardType || "MOTD";
+    cardData.hasContent = lines.length > 0 || Boolean(title) || Boolean(cardType);
+    typeDisplay.textContent = cardData.type;
     const lineTexts = lines.map((line) => line.text);
     // auto-fill the title from the paste unless the user typed their own
     if (!cardData.titleEdited) {
